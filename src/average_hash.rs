@@ -35,10 +35,14 @@ fn average_hash(image_path: &Path) -> Result<FixedBitSet, Error> {
 
 /// Computes the standard hamming distance of two bit-strings. This is the number of places where
 /// the two strings differ.
-fn hamming_distance(hash_one: &FixedBitSet, hash_two: &FixedBitSet) -> u8 {
-    hash_one.symmetric_difference(hash_two)
-        .collect::<FixedBitSet>()
-        .count_ones(..) as u8
+fn hamming_distance(hash_one: &FixedBitSet, hash_two: &FixedBitSet) -> Result<u8, Error> {
+    if hash_one.len() != hash_two.len() {
+        Err(Error::LengthMismatch)
+    } else {
+        Ok(hash_one.symmetric_difference(hash_two)
+            .collect::<FixedBitSet>()
+            .count_ones(..) as u8)
+    }
 }
 
 /// The main function that determines if two functions are equal. This works in two steps:
@@ -47,8 +51,86 @@ fn hamming_distance(hash_one: &FixedBitSet, hash_two: &FixedBitSet) -> u8 {
 /// 2. Check the if the resulting bit-strings are of hamming distance < 10 of each other
 pub fn are_images_equal(image_1: &Path, image_2: &Path) -> Result<bool, Error> {
     Ok(hamming_distance(&average_hash(image_1)?,
-                        &average_hash(image_2)?) < 10)
+                        &average_hash(image_2)?)? < 10)
 }
+
+/// Test that the hamming distance function works correctly
+#[cfg(test)]
+mod test_hamming {
+    use super::*;
+
+    /// A template for the parameterized tests below
+    fn hamming_distance_test_template(distance: u8, hash_one: &[bool], hash_two: &[bool]) {
+        let mut hash_one_ = FixedBitSet::with_capacity(hash_one.len());
+        let mut hash_two_ = FixedBitSet::with_capacity(hash_two.len());
+
+        let _ = hash_one.iter()
+            .enumerate()
+            .map(|(ix, value)| hash_one_.set(ix, *value))
+            .collect::<()>();
+
+        let _ = hash_two.iter()
+            .enumerate()
+            .map(|(ix, value)| hash_two_.set(ix, *value))
+            .collect::<()>();
+
+        let expected_distance = hamming_distance(&hash_one_, &hash_two_).unwrap();
+        assert_eq!(expected_distance, distance);
+    }
+
+    macro_rules! hamming_distance_tests {
+        ($($name: ident: ($distance:expr, $hash_one:expr, $hash_two:expr, $panic:meta),)*) => {
+            $(
+                #[test]
+                #[$panic]
+                fn $name() {
+                    hamming_distance_test_template($distance, &$hash_one, &$hash_two);
+                }
+            )*
+        };
+    }
+
+    hamming_distance_tests!{
+        test_hamming_distance_panic: (
+            0,
+            vec!(true),
+            vec!(true, false),
+            should_panic
+        ),
+        test_hamming_distance_panic_2: (
+            0,
+            Vec::new(),
+            vec!(true, false),
+            should_panic
+        ),
+        test_hamming_distance_trivial: (
+            0,
+            Vec::new(),
+            Vec::new(),
+            test
+        ),
+        test_hamming_distance_0: (
+            0,
+            vec!(true, false, true, false),
+            vec!(true, false, true, false),
+            test
+        ),
+        test_hamming_distance_1: (
+            1,
+            vec!(false, false, true, false),
+            vec!(true, false, true, false),
+            test
+        ),
+        test_hamming_distance_4: (
+            4,
+            vec!(false, false, true, true),
+            vec!(true, true, false, false),
+            test
+        ),
+
+    }
+}
+
 
 /// This is minimum required tests that must pass in order for the assignment to be complete.
 #[cfg(test)]

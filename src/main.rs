@@ -1,5 +1,5 @@
 
-mod ahash;
+mod average_hash;
 mod errors;
 
 fn main() {

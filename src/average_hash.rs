@@ -60,7 +60,7 @@ mod test_hamming {
     use super::*;
 
     /// A template for the parameterized tests below
-    fn hamming_distance_test_template(distance: u8, hash_one: &[bool], hash_two: &[bool]) {
+    fn hamming_distance_test_template(distance: u8, hash_one: Vec<bool>, hash_two: Vec<bool>) {
         let mut hash_one_ = FixedBitSet::with_capacity(hash_one.len());
         let mut hash_two_ = FixedBitSet::with_capacity(hash_two.len());
 
@@ -84,7 +84,7 @@ mod test_hamming {
                 #[test]
                 #[$panic]
                 fn $name() {
-                    hamming_distance_test_template($distance, &$hash_one, &$hash_two);
+                    hamming_distance_test_template($distance, $hash_one, $hash_two);
                 }
             )*
         };

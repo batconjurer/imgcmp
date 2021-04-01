@@ -1,8 +1,0 @@
-language: rust
-rust:
-  - stable
-
-script:
-  - cargo build --verbose
-  - cargo test --verbose
-  - cargo clippy --verbose

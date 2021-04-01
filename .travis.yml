@@ -5,4 +5,5 @@ rust:
 script:
   - cargo build --verbose
   - cargo test --verbose
-  - cargo clippy --verbose
+  - rustup component add clippy
+  - cargo clippy --all-targets --all-features -- -D warnings
